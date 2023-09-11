@@ -84,26 +84,25 @@ echo $LOADDEFAULT > /run/loaddefault
 if [ $LOADDEFAULT = "false" ]; then
 	if [ $(DBCheck) -eq 1 ]; then
 		echo " It looks like there is already a gvmd database."
-		echo " Failing out to prevent overwriting the existing DB"
-		exit 
-	fi
-	echo "Creating Greenbone Vulnerability Manager database"
-	su -c "createuser -DRS gvm" postgres
-	su -c "createdb -O gvm gvmd" postgres
-	su -c "psql --dbname=gvmd --command='create role dba with superuser noinherit;'" postgres
-	su -c "psql --dbname=gvmd --command='grant dba to gvm;'" postgres
-	su -c "psql --dbname=gvmd --command='create extension \"uuid-ossp\";'" postgres
-	su -c "psql --dbname=gvmd --command='create extension \"pgcrypto\";'" postgres
-	chown postgres:postgres -R /data/database
-	su -c "/usr/lib/postgresql/13/bin/pg_ctl -D /data/database restart" postgres
-
-	su -c "gvm-manage-certs -V" gvm 
-	NOCERTS=$?
-	while [ $NOCERTS -ne 0 ] ; do
-		su -c "gvm-manage-certs -vaf " gvm
-		su -c "gvm-manage-certs -V " gvm 
+		echo " We are not going to provision the database as it's been already done."
+	else
+		echo "Creating Greenbone Vulnerability Manager database"
+		su -c "createuser -DRS gvm" postgres
+		su -c "createdb -O gvm gvmd" postgres
+		su -c "psql --dbname=gvmd --command='create role dba with superuser noinherit;'" postgres
+		su -c "psql --dbname=gvmd --command='grant dba to gvm;'" postgres
+		su -c "psql --dbname=gvmd --command='create extension \"uuid-ossp\";'" postgres
+		su -c "psql --dbname=gvmd --command='create extension \"pgcrypto\";'" postgres
+		chown postgres:postgres -R /data/database
+		su -c "/usr/lib/postgresql/13/bin/pg_ctl -D /data/database restart" postgres
+		su -c "gvm-manage-certs -V" gvm
 		NOCERTS=$?
-	done
+		while [ $NOCERTS -ne 0 ] ; do
+			su -c "gvm-manage-certs -vaf " gvm
+			su -c "gvm-manage-certs -V " gvm
+			NOCERTS=$?
+		done
+	fi
 fi
 
 
